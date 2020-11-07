@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "Lev0nids_bmp_library.h"
+#include "libs/Lev0nids_bmp_library.h"
 
 //Название bmp для сравнения вводятся через аргументы командной строки
 int main(int argc, char** argv) {

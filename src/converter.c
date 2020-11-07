@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include "Lev0nids_bmp_library.h"
-#include "qdbmp.h"
+#include "libs/Lev0nids_bmp_library.h"
+#include "libs/qdbmp.h"
 
 int main(int argc, char** argv) {
     if(argc != 4) {
