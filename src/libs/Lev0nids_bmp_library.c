@@ -79,7 +79,7 @@ static int write_ushort(unsigned short x, FILE* file) {
 static bool check_type(unsigned short type) {
     char possible_values[6][2] = {"BM", "BA", "CI", "CP", "IC", "PT"};
     for(unsigned int i = 0; i < 6; i++) {
-        if(memcmp(&type, possible_values, 2) == 0) return true;
+        if(memcmp(&type, possible_values[i], 2) == 0) return true;
     }
     return false;
 }
@@ -172,7 +172,7 @@ static void get_pixel_color(MY_BMP* bmp, int x, int y, unsigned char* r, unsigne
         bytes_per_pixel = 3;
     }
     pixel = bmp->pixel_array + ((abs(bmp->header->height) - y - 1) * bytes_per_row + x * bytes_per_pixel);
-    if(bmp->color_palette != NULL) { //Если bmp 8 бит, то надо в палитру посмотреть
+    if(bmp->color_palette != NULL) {
         pixel = bmp->color_palette + *pixel * 4;
     }
     *r = pixel[2];
