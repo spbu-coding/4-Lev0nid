@@ -1,7 +1,3 @@
-//
-// Created by Lev0nid on 27.10.2020.
-//
-
 #include "Lev0nids_bmp_library.h"
 
 enum BMP_ERROR LAST_ERROR = NO_ERROR;
@@ -184,6 +180,10 @@ static void get_pixel_color(MY_BMP* bmp, int x, int y, unsigned char* r, unsigne
     *b = pixel[0];
 }
 
+<<<<<<< Updated upstream
+=======
+static void set_pixel_color(MY_BMP* bmp, int x, int y, unsigned char r, unsigned char g, unsigned char b) {
+>>>>>>> Stashed changes
     unsigned char* pixel;
     unsigned int bytes_per_row = bmp->header->image_size / abs(bmp->header->height);
     unsigned int bytes_per_pixel = 3;

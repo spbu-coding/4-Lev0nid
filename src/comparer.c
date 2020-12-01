@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "libs/Lev0nids_bmp_library.h"
 
-//Название bmp для сравнения вводятся через аргументы командной строки
 int main(int argc, char** argv) {
     if(argc != 3) {
         printf("Incorrect amount of params");
