@@ -1,14 +1,9 @@
-//
-// Created by Lev0nid on 27.10.2020.
-//
-
 #include "Lev0nids_bmp_library.h"
 
 enum BMP_ERROR LAST_ERROR = NO_ERROR;
 
-//Приватные функции
-
-int read_uint(unsigned int* x, FILE* file) {
+//Reads a little-endian unsigned int
+static int read_uint(unsigned int* x, FILE* file) {
     unsigned char input[4];
     if(fread(input, 4, 1, file) != 1) {
         if(feof(file) != 0) {
@@ -22,7 +17,8 @@ int read_uint(unsigned int* x, FILE* file) {
     return 1;
 }
 
-int read_ushort(unsigned short* x, FILE* file) {
+//Reads a little-endian unsigned short
+static int read_ushort(unsigned short* x, FILE* file) {
     unsigned char input[2];
     if(fread(input, 2, 1, file) != 1) {
         if(feof(file) != 0) {
@@ -36,7 +32,8 @@ int read_ushort(unsigned short* x, FILE* file) {
     return 1;
 }
 
-int read_int(int* x, FILE* file) {
+//Reads a little-endian int
+static int read_int(int* x, FILE* file) {
     char input[4];
     if(fread(input, 4, 1, file) != 1) {
         if(feof(file) != 0) {
@@ -49,8 +46,8 @@ int read_int(int* x, FILE* file) {
     *x = (input[3] << 24 | input[2] << 16 | input[1] << 8 | input[0]);
     return 1;
 }
-
-int write_uint(unsigned int x, FILE* file) {
+//Writes a little-endian unsigned int
+static int write_uint(unsigned int x, FILE* file) {
     unsigned char output[4];
     output[3] = (unsigned char)((x & 0xff000000) >> 24);
     output[2] = (unsigned char)((x & 0x00ff0000) >> 16);
@@ -60,7 +57,8 @@ int write_uint(unsigned int x, FILE* file) {
     return (file && fwrite(output, 4, 1, file) == 1);
 }
 
-int write_int(int x, FILE* file) {
+//Reads a little-endian int
+static int write_int(int x, FILE* file) {
     char output[4];
     output[3] = (char)((x & 0xff000000) >> 24);
     output[2] = (char)((x & 0x00ff0000) >> 16);
@@ -70,14 +68,15 @@ int write_int(int x, FILE* file) {
     return (file && fwrite(output, 4, 1, file) == 1);
 }
 
-int write_ushort(unsigned short x, FILE* file) {
+//Reads a little-endian unsigned short
+static int write_ushort(unsigned short x, FILE* file) {
     char output[2];
     output[1] = (unsigned char)((x & 0xff00) >> 8);
     output[0] = (unsigned char)((x & 0x00ff) >> 0);
     return (file && fwrite(output, 2, 1, file) == 1);
 }
 
-bool check_type(unsigned short type) {
+static bool check_type(unsigned short type) {
     char possible_values[6][2] = {"BM", "BA", "CI", "CP", "IC", "PT"};
     for(unsigned int i = 0; i < 6; i++) {
         if(memcmp(&type, possible_values, 2) == 0) return true;
@@ -85,18 +84,17 @@ bool check_type(unsigned short type) {
     return false;
 }
 
-//Приватная функция. Гарантируется, что файл существует, он открылся.
-MY_BMP_HEADER* get_header(FILE* file) {
+static MY_BMP_HEADER* get_header(FILE* file) {
     MY_BMP_HEADER* bmp_header = (MY_BMP_HEADER*)malloc(sizeof(MY_BMP_HEADER));
+    if(bmp_header == NULL) {
+        return NULL;
+    }
 
     unsigned int calculated_size;
     fseek(file, 0, SEEK_END);
     calculated_size = ftell(file);
     fseek(file, 0, SEEK_SET);
-    if(calculated_size < 26) {
-        LAST_ERROR = INCORRECT_SIZE;
-        return NULL;
-    }
+
     if(read_ushort(&bmp_header->type, file) == 0) return NULL;
     if(!check_type(bmp_header->type)) {
         LAST_ERROR = INCORRECT_FORMAT;
@@ -164,8 +162,7 @@ MY_BMP_HEADER* get_header(FILE* file) {
     return bmp_header;
 }
 
-//Приватная функция. Гарантируется: bmp не NULL, координаты точек не выходят за пределы, 8 или 24 бита на пиксель
-void get_pixel_color(MY_BMP* bmp, int x, int y, unsigned char* r, unsigned char* g, unsigned char* b) {
+static void get_pixel_color(MY_BMP* bmp, int x, int y, unsigned char* r, unsigned char* g, unsigned char* b) {
     unsigned char* pixel;
     unsigned int bytes_per_row = bmp->header->image_size / abs(bmp->header->height);
     unsigned int bytes_per_pixel;
@@ -183,8 +180,7 @@ void get_pixel_color(MY_BMP* bmp, int x, int y, unsigned char* r, unsigned char*
     *b = pixel[0];
 }
 
-//Приватная функция. Гарантируется: bmp не NULL, на пиксель 24 бита, координаты точек не выходят за пределы.
-void set_pixel_color(MY_BMP* bmp, int x, int y, unsigned char r, unsigned char g, unsigned char b) {
+static void set_pixel_color(MY_BMP* bmp, int x, int y, unsigned char r, unsigned char g, unsigned char b) {
     unsigned char* pixel;
     unsigned int bytes_per_row = bmp->header->image_size / abs(bmp->header->height);
     unsigned int bytes_per_pixel = 3;
@@ -194,10 +190,8 @@ void set_pixel_color(MY_BMP* bmp, int x, int y, unsigned char r, unsigned char g
     pixel[0] = b;
 }
 
-//Публичные функции
-
 void free_BMP(MY_BMP* bmp) {
-    if(bmp->color_palette != NULL) //проверяем, была ли выделена память
+    if(bmp->color_palette != NULL)
         free(bmp->color_palette);
     if(bmp->pixel_array != NULL)
         free(bmp->pixel_array);
@@ -239,6 +233,10 @@ MY_BMP* read_BMP(char* name_of_file) {
     }
 
     bmp = (MY_BMP*)malloc(sizeof(MY_BMP));
+    if(bmp == NULL) {
+        free_BMP(bmp);
+        return NULL;
+    }
     bmp->pixel_array = NULL;
     bmp->color_palette = NULL;
 
@@ -257,6 +255,10 @@ MY_BMP* read_BMP(char* name_of_file) {
     if(bmp->header->bits_per_pixel == 8) {
         unsigned int size_of_palette = SIZE_OF_PALETTE_8bpp;
         bmp->color_palette = (unsigned char*)malloc(size_of_palette * sizeof(unsigned char));
+        if(bmp->color_palette == NULL) {
+            free_BMP(bmp);
+            return NULL;
+        }
         if(fread(bmp->color_palette, sizeof(unsigned char), size_of_palette, file) != size_of_palette) {
             if(feof(file) != 0) {
                 LAST_ERROR = BROKEN_FILE;
@@ -271,6 +273,10 @@ MY_BMP* read_BMP(char* name_of_file) {
     }
 
     bmp->pixel_array = (unsigned char*)malloc(bmp->header->image_size);
+    if(bmp->pixel_array == NULL) {
+        free_BMP(bmp);
+        return NULL;
+    }
     if(fread(bmp->pixel_array, sizeof(unsigned char), bmp->header->image_size, file) != bmp->header->image_size) {
         if(feof(file) != 0) {
             LAST_ERROR = BROKEN_FILE;
@@ -343,7 +349,7 @@ void save_BMP(MY_BMP* bmp, char* name_of_file) {
     write_uint(bmp->header->number_of_colors, file);
     write_uint(bmp->header->number_of_important_colors, file);
 
-    if(bmp->header->bits_per_pixel == 8) //Проверка есть ли у нас палитра
+    if(bmp->header->bits_per_pixel == 8)
         fwrite(bmp->color_palette, sizeof(unsigned char), SIZE_OF_PALETTE_8bpp, file);
 
     fwrite(bmp->pixel_array, sizeof(unsigned char), bmp->header->image_size, file);
